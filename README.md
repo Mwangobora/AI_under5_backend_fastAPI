@@ -128,11 +128,13 @@ POST /api/v1/auth/reset-password    - Reset password with token
 ### User Management
 ```
 GET  /api/v1/users/me              - Get current user profile
+PUT  /api/v1/users/language        - Update language preference
 ```
 
 ### ML Predictions (Child Nutrition & Health)
+**Multilingual Support: English & Swahili** 🇹🇿
 ```
-POST /api/v1/chatbot               - Ask nutrition/health questions
+POST /api/v1/chatbot               - Ask nutrition/health/parenting questions
 POST /api/v1/predict               - Predict malnutrition status & risk
 POST /api/v1/recommend             - Get nutrition recommendations
 POST /api/v1/analyze               - Complete analysis (predict + recommend)
@@ -168,7 +170,15 @@ curl -X GET "http://localhost:8000/api/v1/users/me" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-#### 4. Ask chatbot question
+#### 4. Set language preference
+```bash
+curl -X PUT "http://localhost:8000/api/v1/users/language" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"language": "swahili"}'
+```
+
+#### 5. Ask chatbot question (English)
 ```bash
 curl -X POST "http://localhost:8000/api/v1/chatbot" \
   -H "Content-Type: application/json" \
@@ -176,7 +186,15 @@ curl -X POST "http://localhost:8000/api/v1/chatbot" \
   -d '{"question": "What should I feed my 2-year-old for healthy growth?"}'
 ```
 
-#### 5. Predict child nutrition status
+#### 6. Ask chatbot question (Swahili)
+```bash
+curl -X POST "http://localhost:8000/api/v1/chatbot" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"question": "Nimpe nini mtoto wangu wa miaka 2 kwa ukuaji mzuri?", "language": "swahili"}'
+```
+
+#### 7. Predict child nutrition status
 ```bash
 curl -X POST "http://localhost:8000/api/v1/predict" \
   -H "Content-Type: application/json" \
@@ -202,7 +220,7 @@ curl -X POST "http://localhost:8000/api/v1/predict" \
   }'
 ```
 
-#### 6. Get nutrition recommendations
+#### 8. Get nutrition recommendations
 ```bash
 curl -X POST "http://localhost:8000/api/v1/recommend" \
   -H "Content-Type: application/json" \
@@ -346,3 +364,4 @@ For questions or issues:
 ---
 
 **Remember**: This is a development-ready authentication system. For production use, implement the additional security measures outlined in the Security Notes section above.
+# AI_under5_backend_fastAPI
