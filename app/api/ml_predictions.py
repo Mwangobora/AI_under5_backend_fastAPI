@@ -23,31 +23,39 @@ async def chatbot_question(
     current_user=Depends(get_current_user)
 ) -> ChatbotResponse:
     """
-    Get answers to child nutrition, health, and development questions.
+    Get answers to child nutrition, health, development, and parenting questions.
     
     This endpoint provides conversational Q&A for parents seeking guidance
-    about their child's nutrition, health, or development.
+    about their child's nutrition, health, development, play activities,
+    sleep, and general parenting advice.
     """
     try:
         logger.info(f"Chatbot question from user {current_user.id}: {request.question[:50]}...")
         
+        # Use language from request or user's preference
+        language = request.language or current_user.language
+        
         # Get answer from chatbot model
-        answer = ml_models.get_chatbot_answer(request.question)
+        answer = ml_models.get_chatbot_answer(request.question, language)
         
         if not answer or len(answer.strip()) < 10:
+            error_msg = "Imeshindwa kutoa jibu sahihi. Tafadhali jaribu tena." if language == "swahili" else "Unable to generate a proper response. Please try again."
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unable to generate a proper response. Please try again."
+                detail=error_msg
             )
         
-        logger.info(f"Chatbot response generated for user {current_user.id}")
+        logger.info(f"Chatbot response generated for user {current_user.id} in {language}")
         return ChatbotResponse(answer=answer)
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Chatbot error for user {current_user.id}: {e}")
+        error_msg = "Kosa katika kuchakata swali lako. Tafadhali jaribu tena." if (request.language or current_user.language) == "swahili" else "Error processing your question. Please try again."
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing your question. Please try again."
+            detail=error_msg
         )
 
 
@@ -117,30 +125,36 @@ async def get_nutrition_recommendation(
     try:
         logger.info(f"Recommendation request from user {current_user.id}: {request.malnutrition_status}, {request.developmental_risk}")
         
+        # Use language from request or user's preference
+        language = request.language or current_user.language
+        
         # Get recommendation from model
         recommendation = ml_models.get_recommendation(
             request.malnutrition_status,
-            request.developmental_risk
+            request.developmental_risk,
+            language
         )
         
         if not recommendation or len(recommendation.strip()) < 20:
+            error_msg = "Imeshindwa kutoa mapendekezo sahihi. Tafadhali jaribu tena." if language == "swahili" else "Unable to generate proper recommendations. Please try again."
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unable to generate proper recommendations. Please try again."
+                detail=error_msg
             )
         
         response = RecommendationResponse(recommendation=recommendation)
         
-        logger.info(f"Recommendation completed for user {current_user.id}")
+        logger.info(f"Recommendation completed for user {current_user.id} in {language}")
         return response
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Recommendation error for user {current_user.id}: {e}")
+        error_msg = "Kosa katika kutengeneza mapendekezo. Tafadhali jaribu tena." if (request.language or current_user.language) == "swahili" else "Error generating recommendations. Please try again."
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error generating recommendations. Please try again."
+            detail=error_msg
         )
 
 
@@ -181,7 +195,8 @@ async def analyze_child_nutrition(
         # Get recommendation based on prediction
         recommendation = ml_models.get_recommendation(
             prediction_result["malnutrition_status"],
-            prediction_result["developmental_risk"]
+            prediction_result["developmental_risk"],
+            current_user.language
         )
         
         response = {
