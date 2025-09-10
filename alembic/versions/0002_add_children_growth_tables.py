@@ -17,9 +17,19 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create sex enum
+    # Create sex enum only if it doesn't exist
+    bind = op.get_bind()
+    
+    # Check if enum already exists using raw SQL
+    result = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'sexenum'")).fetchone()
+    
+    if not result:
+        # Enum doesn't exist, create it
+        sex_enum = postgresql.ENUM('Male', 'Female', name='sexenum')
+        sex_enum.create(bind)
+    
+    # Reference the enum (whether newly created or existing)
     sex_enum = postgresql.ENUM('Male', 'Female', name='sexenum')
-    sex_enum.create(op.get_bind())
     
     # Create children table
     op.create_table('children',
@@ -67,6 +77,14 @@ def downgrade() -> None:
     op.drop_table('growth_records')
     op.drop_table('children')
     
-    # Drop enum
-    sex_enum = postgresql.ENUM('Male', 'Female', name='sexenum')
-    sex_enum.drop(op.get_bind())
+    # Drop enum only if it exists and no other tables are using it
+    bind = op.get_bind()
+    try:
+        # Check if enum exists before trying to drop it
+        result = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'sexenum'")).fetchone()
+        if result:
+            sex_enum = postgresql.ENUM('Male', 'Female', name='sexenum')
+            sex_enum.drop(bind)
+    except Exception:
+        # Ignore errors if enum is still being used or doesn't exist
+        pass

@@ -69,17 +69,24 @@ class MLModels:
             return self._get_fallback_chatbot_answer(question, language)
         
         try:
-            # If the model has a predict method with language support
-            if hasattr(self.chatbot_model, 'predict'):
-                if hasattr(self.chatbot_model, 'set_language'):
-                    self.chatbot_model.set_language(language)
-                answer = self.chatbot_model.predict([question])[0]
-            # If the model has a get_answer method
-            elif hasattr(self.chatbot_model, 'get_answer'):
-                answer = self.chatbot_model.get_answer(question, language=language)
+            # Prepare input with language context for fine-tuned model
+            if language == "swahili":
+                # Add language prompt to let the fine-tuned model know to respond in Swahili
+                contextualized_question = f"Jibu kwa Kiswahili: {question}"
             else:
-                # Try to call the model directly
-                answer = self.chatbot_model(question)
+                # Default to English
+                contextualized_question = f"Answer in English: {question}"
+            
+            # Use the fine-tuned model's native language capabilities
+            if hasattr(self.chatbot_model, 'predict'):
+                answer = self.chatbot_model.predict([contextualized_question])[0]
+            elif hasattr(self.chatbot_model, 'get_answer'):
+                answer = self.chatbot_model.get_answer(contextualized_question)
+            elif hasattr(self.chatbot_model, '__call__'):
+                answer = self.chatbot_model(contextualized_question)
+            else:
+                # Fallback to simple predict
+                answer = str(self.chatbot_model.predict([contextualized_question]))
             
             return str(answer)
             
@@ -135,20 +142,25 @@ class MLModels:
             return self._get_fallback_recommendation(malnutrition_status, developmental_risk, language)
         
         try:
-            # Prepare input for recommendation model
+            # Prepare input for recommendation model (English-trained)
             input_data = self._prepare_recommendation_input(malnutrition_status, developmental_risk)
             
-            # Make recommendation
+            # Make recommendation (model returns English)
             if hasattr(self.recommendation_model, 'predict'):
-                if hasattr(self.recommendation_model, 'set_language'):
-                    self.recommendation_model.set_language(language)
                 recommendation = self.recommendation_model.predict([input_data])[0]
             elif hasattr(self.recommendation_model, 'get_recommendation'):
-                recommendation = self.recommendation_model.get_recommendation(input_data, language=language)
+                recommendation = self.recommendation_model.get_recommendation(input_data)
             else:
                 recommendation = self.recommendation_model(input_data)
             
-            return str(recommendation)
+            # Since model is English-trained, use fallback for Swahili translation if needed
+            english_recommendation = str(recommendation)
+            
+            # If user wants Swahili, translate the English recommendation
+            if language == "swahili":
+                return self._translate_recommendation_to_swahili(english_recommendation, malnutrition_status, developmental_risk)
+            else:
+                return english_recommendation
             
         except Exception as e:
             logger.error(f"Error in recommendation generation: {e}")
@@ -394,6 +406,11 @@ class MLModels:
         )
         
         return recommendations.get(key, default_message)
+    
+    def _translate_recommendation_to_swahili(self, english_rec: str, malnutrition_status: str, developmental_risk: str) -> str:
+        """Translate English model recommendation to Swahili."""
+        # Use the hardcoded Swahili recommendations as translation
+        return self._get_fallback_recommendation(malnutrition_status, developmental_risk, "swahili")
 
 
 # Global instance

@@ -134,7 +134,7 @@ async def create_child_growth_record(
             "MUAC_for_Age_Percentile": record_data.muac_for_age_percentile or 50.0
         }
         
-        # Run ML prediction
+        # Run ML prediction (English-trained model)
         prediction_result = ml_models.predict_malnutrition_risk(prediction_features)
         
         # Get recommendations
