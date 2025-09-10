@@ -140,6 +140,16 @@ POST /api/v1/recommend             - Get nutrition recommendations
 POST /api/v1/analyze               - Complete analysis (predict + recommend)
 ```
 
+### Child Management
+**Track individual children with growth predictions**
+```
+POST /api/v1/children/register     - Register a new child
+GET  /api/v1/children              - Get all user's children
+POST /api/v1/children/{id}/records - Add growth record + predictions
+GET  /api/v1/children/{id}/history - Get child's growth history
+GET  /api/v1/children/{id}/trends  - Get growth trend analysis
+```
+
 ### Example Usage
 
 #### 1. Register a new user
@@ -228,6 +238,35 @@ curl -X POST "http://localhost:8000/api/v1/recommend" \
   -d '{
     "malnutrition_status": "Underweight",
     "developmental_risk": "At Risk"
+  }'
+```
+
+#### 9. Register a child
+```bash
+curl -X POST "http://localhost:8000/api/v1/children/register" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "name": "Amina",
+    "sex": "Female",
+    "birth_date": "2023-01-12"
+  }'
+```
+
+#### 10. Add growth record with predictions
+```bash
+curl -X POST "http://localhost:8000/api/v1/children/CHILD_UUID/records" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "age_months": 18,
+    "weight_kg": 9.2,
+    "height_cm": 78.5,
+    "muac_cm": 13.8,
+    "diet_diversity_score": 4,
+    "recent_infection": false,
+    "weight_for_age_zscore": -1.2,
+    "height_for_age_zscore": -0.8
   }'
 ```
 

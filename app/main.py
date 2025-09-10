@@ -9,6 +9,7 @@ from app.db.database import create_db_and_tables
 from app.api.auth import router as auth_router
 from app.api.users import router as users_router
 from app.api.ml_predictions import router as ml_router
+from app.api.children import router as children_router
 from app.ml.model_loader import ml_models
 
 # Configure logging
@@ -66,6 +67,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(ml_router)
+app.include_router(children_router)
 
 
 @app.get("/")

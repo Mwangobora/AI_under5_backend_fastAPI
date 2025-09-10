@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 from uuid import uuid4
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Index
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Index, Date, Integer, Float, ForeignKey, Enum
+from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.orm import relationship
+import enum
 
 from app.db.database import Base
 
@@ -63,3 +65,68 @@ class PasswordResetToken(Base):
 
     def __repr__(self) -> str:
         return f"<PasswordResetToken(id={self.id}, user_id={self.user_id})>"
+
+
+class SexEnum(enum.Enum):
+    """Enum for child sex."""
+    MALE = "Male"
+    FEMALE = "Female"
+
+
+class Child(Base):
+    """Child model for tracking children's growth and development."""
+    __tablename__ = "children"
+    
+    child_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    sex = Column(Enum(SexEnum), nullable=False)
+    birth_date = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationship to parent (User)
+    parent = relationship("User", backref="children")
+    
+    # Relationship to growth records
+    growth_records = relationship("GrowthRecord", back_populates="child", cascade="all, delete-orphan")
+    
+    def __repr__(self) -> str:
+        return f"<Child(child_id={self.child_id}, name={self.name})>"
+
+
+class GrowthRecord(Base):
+    """Growth record model for tracking child measurements and predictions."""
+    __tablename__ = "growth_records"
+    
+    record_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    child_id = Column(UUID(as_uuid=True), ForeignKey("children.child_id"), nullable=False, index=True)
+    
+    # Measurements
+    age_months = Column(Integer, nullable=False)
+    weight_kg = Column(Float, nullable=False)
+    height_cm = Column(Float, nullable=False)
+    muac_cm = Column(Float, nullable=True)
+    bmi = Column(Float, nullable=True)
+    diet_diversity_score = Column(Integer, nullable=False, default=0)
+    recent_infection = Column(Boolean, nullable=False, default=False)
+    
+    # Z-scores and percentiles (stored as JSON)
+    z_scores_percentiles = Column(JSON, nullable=True)
+    
+    # Prediction results (stored as JSON)
+    prediction_results = Column(JSON, nullable=True)
+    
+    # Timestamps
+    recorded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationship to child
+    child = relationship("Child", back_populates="growth_records")
+    
+    # Indexes for efficient queries
+    __table_args__ = (
+        Index('idx_growth_records_child_recorded', 'child_id', 'recorded_at'),
+        Index('idx_growth_records_age', 'age_months'),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<GrowthRecord(record_id={self.record_id}, child_id={self.child_id}, age_months={self.age_months})>"
