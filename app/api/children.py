@@ -26,8 +26,8 @@ router = APIRouter(prefix="/api/v1/children", tags=["Child Management"])
 @router.post("/register", response_model=ChildResponse, status_code=status.HTTP_201_CREATED)
 async def register_child(
     child_data: ChildRegister,
-    current_user=Depends(get_current_user),
-    db: Annotated[AsyncSession, Depends(get_async_session)]
+    db: Annotated[AsyncSession, Depends(get_async_session)],
+    current_user=Depends(get_current_user)
 ) -> ChildResponse:
     """Register a new child for the current user."""
     try:
@@ -61,8 +61,8 @@ async def register_child(
 
 @router.get("", response_model=ChildListResponse)
 async def get_user_children(
-    current_user=Depends(get_current_user),
-    db: Annotated[AsyncSession, Depends(get_async_session)]
+    db: Annotated[AsyncSession, Depends(get_async_session)],
+    current_user=Depends(get_current_user)
 ) -> ChildListResponse:
     """Get all children for the current user."""
     try:
@@ -100,8 +100,8 @@ async def get_user_children(
 async def create_child_growth_record(
     child_id: UUID,
     record_data: GrowthRecordCreate,
-    current_user=Depends(get_current_user),
-    db: Annotated[AsyncSession, Depends(get_async_session)]
+    db: Annotated[AsyncSession, Depends(get_async_session)],
+    current_user=Depends(get_current_user)
 ) -> GrowthPredictionResponse:
     """Create a growth record and run predictions for a child."""
     try:
@@ -179,8 +179,8 @@ async def create_child_growth_record(
 @router.get("/{child_id}/history", response_model=ChildGrowthHistory)
 async def get_child_history(
     child_id: UUID,
-    current_user=Depends(get_current_user),
-    db: Annotated[AsyncSession, Depends(get_async_session)]
+    db: Annotated[AsyncSession, Depends(get_async_session)],
+    current_user=Depends(get_current_user)
 ) -> ChildGrowthHistory:
     """Get growth history for a child."""
     try:
@@ -251,8 +251,8 @@ async def get_child_history(
 @router.get("/{child_id}/trends", response_model=GrowthTrend)
 async def get_child_growth_trends(
     child_id: UUID,
-    current_user=Depends(get_current_user),
-    db: Annotated[AsyncSession, Depends(get_async_session)]
+    db: Annotated[AsyncSession, Depends(get_async_session)],
+    current_user=Depends(get_current_user)
 ) -> GrowthTrend:
     """Get growth trend analysis for a child."""
     try:

@@ -62,8 +62,8 @@ async def get_current_user_profile(
 @router.put("/language", response_model=LanguageResponse)
 async def update_language_preference(
     language_data: LanguagePreference,
-    current_user=Depends(get_current_user),
-    db: Annotated[AsyncSession, Depends(get_async_session)]
+    db: Annotated[AsyncSession, Depends(get_async_session)],
+    current_user=Depends(get_current_user)
 ) -> LanguageResponse:
     """Update user's language preference."""
     success = await update_user_language(db, current_user.id, language_data.language)
